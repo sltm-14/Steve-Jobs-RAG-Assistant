@@ -20,34 +20,66 @@ collection = client.get_or_create_collection(name="steve_jobs_corpus")
 
 
 @app.get("/")
+
 def root():
-    # Health check endpoint
+    """
+    Basic health check endpoint to verify that the API is running.
+    """
     return {"message": "Steve Jobs RAG Assistant is running"}
 
 
+
 @app.post("/ingest_file")
+
 async def upload_file(uploaded_file: UploadFile):
+    """
+    Upload a .txt file and ingest it into the vector database.
+    Steps:
+
+    1. Read uploaded file bytes
+    2. Decode bytes into text
+    3. Clean text
+    4. Chunk text
+    5. Generate embeddings
+    6. Store in ChromaDB
+    """
+
+    # Read raw uploaded file content
     content = await uploaded_file.read()
+
+    # Convert bytes into utf-8 text
     text = content.decode("utf-8")
 
+    # Debug info in terminal
     print("filename:", uploaded_file.filename)
     print("text length:", len(text))
     print("text preview:", repr(text[:200]))
 
+    # Send text to ingestion pipeline
     return ingest_file(text, uploaded_file.filename)
+
 
 
 @app.post("/ask")
 def ask(request: AskRequest):
+    """
+    Query the indexed corpus.
+    Request body includes:
+    - question: user question
+    - top_k: number of chunks to retrieve
+    - mode: evidence or persona
+    """
 
+    # Run semantic retrieval pipeline
     retrieval_result = run_retrieval(
         question=request.question,
         top_k=request.top_k,
-        mode = request.mode,
+        mode=request.mode,
         model=model,
         collection=collection
     )
 
+    # Return final response
     return {
         "question": request.question,
         "mode": request.mode,
