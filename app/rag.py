@@ -1,4 +1,5 @@
 # Retrieval and response-building logic for the RAG system
+from app.llm import generate_answer
 
 def run_retrieval(
     question: str,
@@ -28,6 +29,9 @@ def run_retrieval(
     # Validate response mode
     if mode not in ("evidence", "persona"):
         raise ValueError("mode must be 'evidence' or 'persona'")
+    
+    if top_k <= 0:
+        raise ValueError("top_k must be greater than 0")
     
     # Convert user question into an embedding vector
     query_embedding = model.encode([question]).tolist()
@@ -59,15 +63,24 @@ def run_retrieval(
                 "source": metadata.get("source") if metadata else None,  # Source file/reference
                 "distance": distance  # Similarity distance score
             })
+    
+    if not matches and mode == "evidence":
+        return {
+            "answer": "No encontré evidencia suficiente en el contexto para responder esa pregunta.",
+            "matches": []
+        }
+
     # Build response depending on selected mode
-    if mode == "evidence":
-        answer = build_evidence_answer(matches)
-    elif mode == "persona":
-        answer = build_persona_answer(matches)
+    # if mode == "evidence":
+    #     answer = build_evidence_answer(matches)
+    # elif mode == "persona":
+    #     answer = build_persona_answer(matches)
+
+    response = generate_answer(question, matches, mode)
 
     # Return both the combined context and individual matches
     return {
-        "answer": answer,
+        "answer": response,
         "matches": matches
     }
 
@@ -194,7 +207,7 @@ def clean_text(text: str) -> str:
         # Skip lines containing unwanted metadata/editorial artifacts
         if any(word in line for word in forbidden_words):
             continue
-        
+
         cleaned_lines.append(line)
 
     return "\n".join(cleaned_lines)

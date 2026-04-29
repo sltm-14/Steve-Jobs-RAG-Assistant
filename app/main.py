@@ -79,10 +79,19 @@ def ask(request: AskRequest):
         collection=collection
     )
 
+    sources = []
+    for match in retrieval_result["matches"]:
+        sources.append({
+            "source": match["source"],
+            "chunk_id": match["id"],
+            "distance": match["distance"]
+        })
+
     # Return final response
     return {
         "question": request.question,
         "mode": request.mode,
         "answer": retrieval_result["answer"],
+        "sources": sources,
         "matches": retrieval_result["matches"]
     }
