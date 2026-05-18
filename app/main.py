@@ -1,9 +1,10 @@
 from fastapi import FastAPI, UploadFile
 from sentence_transformers import SentenceTransformer
-from app.rag import run_retrieval
-from app.ingest import ingest_file
 import chromadb
 
+from app.rag import run_retrieval
+from app.ingest import ingest_file
+from app.ingest import extract_text_from_pdf
 from app.schemas import AskRequest
 
 # Initialize FastAPI application
@@ -29,7 +30,7 @@ def root():
 
 
 
-@app.post("/ingest_file")
+@app.post("/ingest_file")     
 
 async def upload_file(uploaded_file: UploadFile):
     """
@@ -47,8 +48,18 @@ async def upload_file(uploaded_file: UploadFile):
     # Read raw uploaded file content
     content = await uploaded_file.read()
 
-    # Convert bytes into utf-8 text
-    text = content.decode("utf-8")
+    filename = uploaded_file.filename or "uploaded_file"
+
+    if filename.lower().endswith(".txt"):
+        text = content.decode("utf-8")
+
+    elif filename.lower().endswith(".pdf"):
+        text = extract_text_from_pdf(content)
+
+    else:
+        return {
+            "error": "Unsupported file type. Please upload a .txt or .pdf file."
+        }
 
     # Debug info in terminal
     print("filename:", uploaded_file.filename)

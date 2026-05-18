@@ -5,6 +5,8 @@
 from app.rag import chunk_text_by_paragraphs, clean_text
 from sentence_transformers import SentenceTransformer
 from pathlib import Path
+from io import BytesIO
+from pypdf import PdfReader
 
 import chromadb
 
@@ -30,7 +32,8 @@ def ingest_file(content: str, file_name: str):
     processed_text = clean_text(content)
 
     # Save cleaned version for debugging / inspection
-    new_path = f"data/processed/{file_name}"
+    file_stem = Path(file_name).stem
+    new_path = f"data/processed/{file_stem}.txt"
 
     with open(new_path, "w", encoding="utf-8") as archivo:
         archivo.write(processed_text)
@@ -127,3 +130,27 @@ def chunking_process(processed_text: str, source: str):
         "num_chunks": len(chunks),
         "ids_count": len(ids)
     }
+
+
+
+
+def extract_text_from_pdf(file_bytes: bytes) -> str:
+    """
+    Extract text from a PDF file.
+
+    This works for PDFs with selectable text.
+    It does not perform OCR on scanned images.
+    """
+
+    reader = PdfReader(BytesIO(file_bytes))
+
+    pages_text = []
+
+    for page_number, page in enumerate(reader.pages, start=1):
+        
+        text = page.extract_text() or ""
+
+        if text.strip():
+            pages_text.append(f"\n--- Page {page_number} ---\n{text}")
+
+    return "\n".join(pages_text)
