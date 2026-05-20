@@ -1,7 +1,23 @@
 # .gitignore
+
+# Secrets
 .env
-CLAUDE.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+
+# ChromaDB — regenerable with scripts/ingest_corpus.py
+chroma_db/
+
+# Claude Code local settings
+.claude/
+
+# Personal / scratchpad
 context/
 ignore/
-.claude/
-.claude/
+CLAUDE.md
