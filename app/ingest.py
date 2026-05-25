@@ -2,6 +2,8 @@
 # This module handles text cleaning, chunking, embedding generation,
 # and storing chunks in ChromaDB.
 
+import logging
+
 from app.rag import chunk_text_by_paragraphs, clean_text
 from sentence_transformers import SentenceTransformer
 from pathlib import Path
@@ -9,6 +11,8 @@ from io import BytesIO
 from pypdf import PdfReader
 
 import chromadb
+
+logger = logging.getLogger(__name__)
 
 
 # Load embedding model once when this module is imported.
@@ -37,7 +41,7 @@ def ingest_file(content: str, file_name: str):
 
     with open(new_path, "w", encoding="utf-8") as archivo:
         archivo.write(processed_text)
-        print("Processed file created")
+        logger.info("Processed file saved. path=%s", new_path)
 
     # Chunk, embed, and store content in ChromaDB
     return chunking_process(processed_text, file_name)
@@ -61,7 +65,7 @@ def ingest_from_path(file_path: str, source: str):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             text = file.read()
-            print("File read")
+            logger.info("File read. path=%s chars=%d", file_path, len(text))
 
     except FileNotFoundError as e:
         raise FileNotFoundError(
@@ -78,7 +82,7 @@ def ingest_from_path(file_path: str, source: str):
     # Save cleaned text for inspection
     with open(new_path, "w", encoding="utf-8") as archivo:
         archivo.write(processed_text)
-        print("Processed file created")
+        logger.info("Processed file saved. path=%s", new_path)
 
     # Chunk, embed, and store content in ChromaDB
     return chunking_process(processed_text, source)
@@ -98,6 +102,7 @@ def chunking_process(processed_text: str, source: str):
 
     # Split cleaned text into paragraph-aware chunks
     chunks = chunk_text_by_paragraphs(processed_text, 1000)
+    logger.info("Text chunked. source=%s chunks=%d", source, len(chunks))
 
     # Connect to persistent ChromaDB storage
     client = chromadb.PersistentClient(path="./chroma_db")
@@ -107,6 +112,7 @@ def chunking_process(processed_text: str, source: str):
 
     # Generate embeddings for all chunks
     embeddings = model.encode(chunks).tolist()
+    logger.info("Embeddings generated. count=%d", len(embeddings))
 
     # Count existing chunks to generate unique IDs
     current_count = collection.count()
@@ -124,6 +130,7 @@ def chunking_process(processed_text: str, source: str):
         metadatas=metadatas,
         ids=ids
     )
+    logger.info("Chunks stored in ChromaDB. source=%s total_ids=%d", source, len(ids))
 
     return {
         "message": "Chunks ingested successfully",

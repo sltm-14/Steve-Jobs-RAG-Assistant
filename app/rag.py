@@ -1,5 +1,9 @@
 # Retrieval and response-building logic for the RAG system
+import logging
+
 from app.llm import generate_answer
+
+logger = logging.getLogger(__name__)
 
 def run_retrieval(
     question: str,
@@ -33,6 +37,8 @@ def run_retrieval(
     if top_k <= 0:
         raise ValueError("top_k must be greater than 0")
     
+    logger.info("Retrieval started. mode=%s top_k=%d question=%r", mode, top_k, question)
+
     # Convert user question into an embedding vector
     query_embedding = model.encode([question]).tolist()
 
@@ -64,7 +70,13 @@ def run_retrieval(
                 "distance": distance  # Similarity distance score
             })
     
+    logger.info(
+        "Distance filter applied. retrieved=%d matched=%d max_distance=%.2f",
+        len(documents), len(matches), max_distance
+    )
+
     if not matches and mode == "evidence":
+        logger.warning("No matches passed the distance filter. Returning fallback. mode=%s", mode)
         return {
             "answer": "No encontré evidencia suficiente en el contexto para responder esa pregunta.",
             "matches": []

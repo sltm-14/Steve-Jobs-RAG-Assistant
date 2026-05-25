@@ -47,6 +47,7 @@ def generate_answer(question: str, matches: list[dict], mode: str) -> str:
                 Respond in the same language as the user's question.
                 """
     else:
+        logger.warning("Unsupported mode received. mode=%s", mode)
         return "Selected mode not supported"
 
     # Converts the matches into a single context string
