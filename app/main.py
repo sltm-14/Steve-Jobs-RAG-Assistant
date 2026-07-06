@@ -77,7 +77,7 @@ async def upload_file(uploaded_file: UploadFile):
     logger.debug("Text preview: %s", repr(text[:200]))
 
     # Send text to ingestion pipeline
-    return ingest_file(text, uploaded_file.filename, model)
+    return ingest_file(text, uploaded_file.filename, model, client, collection)
 
 
 
