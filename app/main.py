@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Steve Jobs RAG Assistant")
 
 # Load embedding model for transforming text into vectors
+# This model converts text chunks into embedding vectors.
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Create or connect to persistent ChromaDB storage
@@ -76,7 +77,7 @@ async def upload_file(uploaded_file: UploadFile):
     logger.debug("Text preview: %s", repr(text[:200]))
 
     # Send text to ingestion pipeline
-    return ingest_file(text, uploaded_file.filename)
+    return ingest_file(text, uploaded_file.filename, model)
 
 
 
