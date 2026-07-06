@@ -3,6 +3,7 @@ import logging
 
 from app.llm import generate_answer
 
+
 logger = logging.getLogger(__name__)
 
 def run_retrieval(
