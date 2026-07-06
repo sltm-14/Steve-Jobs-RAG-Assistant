@@ -53,8 +53,7 @@ def run_retrieval(
     documents = results["documents"][0]
     metadatas = results["metadatas"][0]
     distances = results["distances"][0]
-
-    ids = results["ids"][0]
+    ids       = results["ids"][0]
 
     # Store only matches that are close enough to the question
     matches = []
@@ -78,16 +77,11 @@ def run_retrieval(
     if not matches and mode == "evidence":
         logger.warning("No matches passed the distance filter. Returning fallback. mode=%s", mode)
         return {
-            "answer": "No encontré evidencia suficiente en el contexto para responder esa pregunta.",
+            "answer": "No matches passed the distance filter",
             "matches": []
         }
 
-    # Build response depending on selected mode
-    # if mode == "evidence":
-    #     answer = build_evidence_answer(matches)
-    # elif mode == "persona":
-    #     answer = build_persona_answer(matches)
-
+    # If the selected mode is "persona", the response is generated even if there are no matches
     response = generate_answer(question, matches, mode)
 
     # Return both the combined context and individual matches
@@ -96,130 +90,4 @@ def run_retrieval(
         "matches": matches
     }
 
-def build_evidence_answer(matches):
-    """
-    Build a simple evidence-based answer.
-    Current MVP behavior:
-    - Returns the most relevant retrieved passage.
-    - Later this can be replaced with an LLM-generated grounded answer.
-    """
 
-    if not matches:
-        return "No relevant evidence found in the indexed corpus."
-
-    return f"Most relevant evidence found: {matches[0]['text']}"
-
-def build_persona_answer(matches):
-    """
-    Build a persona-inspired answer.
-    Current MVP behavior:
-    - Uses the most relevant retrieved passage.
-    - Later this can be replaced with an LLM prompt that writes in a
-      Steve Jobs-inspired tone while staying grounded in retrieved evidence.
-    """
-
-    if not matches:
-        return "No relevant evidence found in the indexed corpus."
-
-    return f"Persona-inspired draft based on retrieved evidence: {matches[0]['text']}"
-
-def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200):
-    """
-    Split text into fixed-size character chunks with overlap.
-    This was the first chunking strategy.
-    It is simple, but it can cut words or ideas in the middle.
-    """
-
-    chunks = []
-    start = 0
-
-    while start < len(text):
-        end = start + chunk_size
-        chunk = text[start:end]
-        chunks.append(chunk)
-
-        # Move forward while keeping some overlap with the previous chunk
-        start += chunk_size - overlap
-
-    return chunks
-
-
-
-def chunk_text_by_paragraphs(text: str, max_chars: int = 1000):
-    """
-    Split text into chunks while trying to preserve paragraph boundaries.
-    This avoids cutting words or sentences in the middle as often as
-    character-based chunking.
-    """
-
-    chunks = []
-    lines = text.splitlines(keepends=True)
-    current_chunk = ""
-
-    for line in lines:
-        # If a single line is longer than max_chars, store it as its own chunk.
-        # This is a simple fallback for very long paragraphs.
-        if len(line) > max_chars:
-            if current_chunk:
-                chunks.append(current_chunk)
-                current_chunk = ""
-
-            chunks.append(line)
-            continue
-
-        # Add line to current chunk if it still fits
-        if len(current_chunk) + len(line) <= max_chars:
-            current_chunk += line
-
-        # Otherwise, save current chunk and start a new one
-        else:
-            if current_chunk:
-                chunks.append(current_chunk)
-
-            current_chunk = line
-
-    # Save final remaining chunk
-
-    if current_chunk:
-        chunks.append(current_chunk)
-
-    return chunks
-
-def clean_text(text: str) -> str:
-    """
-    Basic text cleaning before chunking.
-    Removes:
-    - empty lines
-    - very short noisy lines
-    - lines containing known editorial/source artifacts
-    """
-
-    lines = text.splitlines()
-    forbidden_words = [
-        "Copyright",
-        "Typeset",
-        "Credits",
-        "URL",
-        "Published"
-    ]
-
-    cleaned_lines = []
-
-    for line in lines:
-        line = line.strip()
-
-        # Skip empty lines
-        if not line:
-            continue
-
-        # Skip very short lines that are likely noise
-        if len(line) <= 14:
-            continue
-
-        # Skip lines containing unwanted metadata/editorial artifacts
-        if any(word in line for word in forbidden_words):
-            continue
-
-        cleaned_lines.append(line)
-
-    return "\n".join(cleaned_lines)
