@@ -17,3 +17,5 @@ pydantic==2.12.5
 
 # Environment variables
 python-dotenv==1.2.2
+
+python-multipart==0.0.26
