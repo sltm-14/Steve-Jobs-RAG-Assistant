@@ -1,0 +1,9 @@
+services:
+  api:
+    build: . # Docker file at root
+    ports:
+      - "8000:8000" # Specified in the dockerfile
+    volumes:
+      - ./chroma_db:/home/app/chroma_db
+    env_file:
+      - .env

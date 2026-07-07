@@ -1,0 +1,31 @@
+# .gitignore
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# ChromaDB — regenerable with scripts/ingest_corpus.py
+chroma_db/
+
+# Claude Code local settings
+.claude/
+
+# Personal / scratchpad
+context/
+ignore/
+scripts/
+CLAUDE.md
+
+
+# git history
+.git/
+
+# virtual environment
+.venv/
+
+# macOS metadata
+.DS_Store
