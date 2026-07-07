@@ -1,22 +1,37 @@
 import os
 import logging
-from dotenv import load_dotenv
 import anthropic
+import openai
 
-load_dotenv()
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
-api_key = os.getenv("ANTHROPIC_API_KEY")
-if not api_key:
-    raise ValueError("ANTHROPIC_API_KEY is not set")
+load_dotenv()
 
-client = anthropic.Anthropic(api_key=api_key)
+provider = os.getenv("LLM_PROVIDER", "openai").lower()
+
+if provider == "anthropic":
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise ValueError("ANTHROPIC_API_KEY is not set")
+    client = anthropic.Anthropic(api_key=api_key)
+
+elif provider == "openai":
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY is not set")
+    client = openai.OpenAI(api_key=api_key)
+
+else:
+    raise ValueError(
+        f"Unsupported LLM_PROVIDER: '{provider}'. Must be 'anthropic' or 'openai'."
+    )
 
 
 def generate_answer(question: str, matches: list[dict], mode: str) -> str:
     """
-    Generate an answer using Claude based on retrieved context chunks.
+    Generate an answer using the configured LLM provider.
 
     Args:
         question: The user's question.
@@ -50,31 +65,48 @@ def generate_answer(question: str, matches: list[dict], mode: str) -> str:
         logger.warning("Unsupported mode received. mode=%s", mode)
         return "Selected mode not supported"
 
-    # Converts the matches into a single context string
     formatted_matches = "\n\n".join(
         item["text"] for item in matches if "text" in item
     )
 
-    logger.info("Generating answer. mode=%s chunks=%d", mode, len(matches))
+    logger.info("Generating answer. provider=%s mode=%s chunks=%d", provider, mode, len(matches))
 
-    response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=1024,
-        system=prompt,
-        messages=[
-            {
-                "role": "user",
-                "content": f"CONTEXT:\n{formatted_matches}\n\nQUESTION:\n{question}"
-            }
-        ]
-    )
+    if provider == "anthropic":
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1024,
+            system=prompt,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"CONTEXT:\n{formatted_matches}\n\nQUESTION:\n{question}"
+                }
+            ]
+        )
+        answer = response.content[0].text
+        logger.info(
+            "Answer generated. stop_reason=%s output_tokens=%d",
+            response.stop_reason,
+            response.usage.output_tokens,
+        )
 
-    answer = response.content[0].text
-
-    logger.info(
-        "Answer generated. stop_reason=%s output_tokens=%d",
-        response.stop_reason,
-        response.usage.output_tokens,
-    )
+    elif provider == "openai":
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            max_tokens=1024,
+            messages=[
+                {"role": "system", "content": prompt},
+                {
+                    "role": "user",
+                    "content": f"CONTEXT:\n{formatted_matches}\n\nQUESTION:\n{question}"
+                }
+            ]
+        )
+        answer = response.choices[0].message.content
+        logger.info(
+            "Answer generated. finish_reason=%s output_tokens=%d",
+            response.choices[0].finish_reason,
+            response.usage.completion_tokens,
+        )
 
     return answer
