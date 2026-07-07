@@ -6,15 +6,6 @@ This module defines request schemas using pydantic for a text ingestion and ques
 from pydantic import BaseModel
 from typing import Literal
 
-# Request model for ingesting content
-class IngestTextRequest(BaseModel):
-    """
-    Attributes:
-    -chunks (list[str]): List of text fragments or segments to be processed and stored.
-    -source (str): Identifier or name of the origin of the text data.
-    """
-    chunks: list[str]
-    source: str
 
 # Request model for querying previous ingested data
 class AskRequest(BaseModel): 
@@ -30,4 +21,4 @@ class AskRequest(BaseModel):
     """
     question: str
     top_k: int = 3
-    mode: Literal["evidence","persona"] = "evidence"
+    mode: Literal["evidence","persona"] = "persona"
