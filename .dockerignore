@@ -8,9 +8,6 @@ __pycache__/
 *.pyc
 *.pyo
 
-# ChromaDB — regenerable with scripts/ingest_corpus.py
-chroma_db/
-
 # Claude Code local settings
 .claude/
 
