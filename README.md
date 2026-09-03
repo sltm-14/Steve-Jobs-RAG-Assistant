@@ -1,15 +1,15 @@
 # Steve Jobs RAG Assistant
 
-A RAG-powered assistant that lets you query Steve Jobs' thinking — **evidence mode** returns answers grounded strictly in his documented words, **persona mode** responds in his voice using what's known about him.
+A RAG-powered assistant that lets you query Steve Jobs' thinking. **evidence mode** returns answers grounded strictly in his documented words, **persona mode** responds in his voice using what's known about him.
 
 ## Tech Stack
 
-- **Python** — core language
-- **FastAPI** — REST API framework
-- **ChromaDB** — vector database for semantic search
-- **Sentence Transformers** — text embedding model (all-MiniLM-L6-v2)
-- **OpenAI GPT / Anthropic Claude** — LLM generation (configurable via .env)
-- **Docker** — containerized for reproducible builds
+- **Python**: core language
+- **FastAPI**: REST API framework
+- **ChromaDB**: vector database for semantic search
+- **Sentence Transformers**: text embedding model (all-MiniLM-L6-v2)
+- **OpenAI GPT / Anthropic Claude**: LLM generation (configurable via .env)
+- **Docker**: containerized for reproducible builds
 
 ## Getting Started
 
@@ -59,12 +59,12 @@ Edit `LLM_PROVIDER` in your `.env` and restart:
 docker compose up
 ```
 
-No rebuild needed — only configuration changed.
+No rebuild needed, only configuration changed.
 
 ## Technical Decisions
 
-- **Paragraph-based chunking** — splits text at paragraph boundaries instead of fixed character counts, preserving context and avoiding mid-sentence cuts.
-- **ChromaDB** — lightweight, open source vector database with disk persistence. No separate server required, well suited for projects of this scale.
-- **all-MiniLM-L6-v2** — small, fast embedding model with strong semantic search quality on CPU. No GPU required.
-- **Configurable LLM provider** — switch between OpenAI and Anthropic by changing one line in `.env`, no code changes needed.
-- **Single model and collection instance** — initialized once in `main.py` and passed as parameters, avoiding duplicated instances and making components easier to test in isolation.
+- **Paragraph-based chunking**: splits text at paragraph boundaries instead of fixed character counts, preserving context and avoiding mid-sentence cuts.
+- **ChromaDB**: lightweight, open source vector database with disk persistence. No separate server required, well suited for projects of this scale.
+- **all-MiniLM-L6-v2**: small, fast embedding model with strong semantic search quality on CPU. No GPU required.
+- **Configurable LLM provider**: switch between OpenAI and Anthropic by changing one line in `.env`, no code changes needed.
+- **Single model and collection instance**: initialized once in `main.py` and passed as parameters, avoiding duplicated instances and making components easier to test in isolation.
